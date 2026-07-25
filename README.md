@@ -89,3 +89,8 @@ void on_time_packet_received(const time_manager::TimeSyncPacket& packet) {
     tm.sync_from_time_packet(packet);
 }
 ```
+
+### 4. DHCP Option 42 (SNTP) Configuration Note
+If you configure `config.use_dhcp_sntp = true` to obtain SNTP servers automatically from the local DHCP server, you **MUST** enable `CONFIG_LWIP_DHCP_GET_NTP_SRV=y` in your project's `sdkconfig` (via `menuconfig` or `sdkconfig.defaults`). 
+
+If this option is disabled in `sdkconfig` while `config.use_dhcp_sntp = true` is set, initialization of the SNTP service will fail (returning `ESP_ERR_INVALID_STATE` / 258). If you do not require DHCP-obtained SNTP servers and only wish to use internet pool servers, simply set `config.use_dhcp_sntp = false` and the component will work perfectly without any sdkconfig changes.

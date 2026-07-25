@@ -12,26 +12,27 @@
 #include "time_manager.hpp"
 #include "hal_sntp.hpp"
 #include "hal_system_time.hpp"
-#include "example_secrets.h"
+#include "secrets.h"
 
-static const char *TAG = "main";
+static const char* TAG = "main";
 
 // FreeRTOS event group to signal when we are connected to Wi-Fi and have an IP
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 
-static void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                                int32_t event_id, void* event_data)
+static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         ESP_LOGI(TAG, "Connecting to AP...");
         esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+    }
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGI(TAG, "Disconnected from AP, retrying...");
         xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
         esp_wifi_connect();
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+    }
+    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
         ESP_LOGI(TAG, "Got IP address: " IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
@@ -48,16 +49,9 @@ void wifi_init_sta(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        NULL));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(
+        esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL));
 
     wifi_config_t wifi_config = {};
     std::strncpy((char*)wifi_config.sta.ssid, WIFI_SSID, sizeof(wifi_config.sta.ssid));
@@ -126,7 +120,8 @@ extern "C" void app_main(void)
 
     if (tm.is_synchronized()) {
         ESP_LOGI(TAG, "System time successfully synchronized!");
-    } else {
+    }
+    else {
         ESP_LOGW(TAG, "System time synchronization timed out. Using fallback clock.");
     }
 
@@ -135,7 +130,8 @@ extern "C" void app_main(void)
         char time_buf[64];
         if (tm.get_formatted_time(time_buf, sizeof(time_buf))) {
             ESP_LOGI(TAG, "Current Time: %s (Epoch: %lld ms)", time_buf, (long long)tm.get_timestamp_ms());
-        } else {
+        }
+        else {
             ESP_LOGE(TAG, "Failed to format time");
         }
         vTaskDelay(pdMS_TO_TICKS(2000));
