@@ -8,7 +8,7 @@ get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 list(APPEND EXTRA_COMPONENT_DIRS
     "${PROJECT_ROOT}"
     "${PROJECT_ROOT}/host_test/gtest"
-    "${PROJECT_ROOT}/../idf_hals"
+    "${PROJECT_ROOT}/external/idf_hals"
     "$ENV{IDF_PATH}/tools/mocks/driver"
     "$ENV{IDF_PATH}/tools/mocks/esp_netif"
     "$ENV{IDF_PATH}/tools/mocks/esp_timer"

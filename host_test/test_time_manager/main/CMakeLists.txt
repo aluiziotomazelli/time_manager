@@ -5,7 +5,7 @@ idf_component_register(
     
     INCLUDE_DIRS
         "."
-        "../../../../idf_hals/mocks"
+        "../../../external/idf_hals/mocks"
         
     REQUIRES 
         time_manager

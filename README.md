@@ -1,5 +1,9 @@
 # Time Manager Component
 
+[![ESP-IDF Build](https://github.com/aluiziotomazelli/time_manager/actions/workflows/build.yml/badge.svg)](https://github.com/aluiziotomazelli/time_manager/actions/workflows/build.yml)
+[![Host Tests](https://github.com/aluiziotomazelli/time_manager/actions/workflows/host_test.yml/badge.svg)](https://github.com/aluiziotomazelli/time_manager/actions/workflows/host_test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-report-blue)](https://aluiziotomazelli.github.io/time_manager/index.html)
+
 A lightweight, modular, and dependency-injected C++ library for **ESP-IDF v5.1+** that handles system time, SNTP synchronization, and timezone settings.
 
 ## Features
