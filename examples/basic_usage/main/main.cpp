@@ -6,6 +6,7 @@
 #include "esp_netif.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 #include <cstring>
 
 #include "time_manager.hpp"
@@ -15,6 +16,10 @@
 
 static const char *TAG = "main";
 
+// FreeRTOS event group to signal when we are connected to Wi-Fi and have an IP
+static EventGroupHandle_t s_wifi_event_group;
+#define WIFI_CONNECTED_BIT BIT0
+
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
 {
@@ -23,15 +28,19 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGI(TAG, "Disconnected from AP, retrying...");
+        xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
         esp_wifi_connect();
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "Got IP address: " IPSTR, IP2STR(&event->ip_info.ip));
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
 void wifi_init_sta(void)
 {
+    s_wifi_event_group = xEventGroupCreate();
+
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
@@ -71,9 +80,6 @@ extern "C" void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
-    // Initialize Wi-Fi
-    wifi_init_sta();
-
     // Create HAL dependencies for TimeManager
     static idf_hals::HalSntp sntp_hal;
     static idf_hals::HalSystemTime system_time_hal;
@@ -89,12 +95,20 @@ extern "C" void app_main(void)
     config.default_server = "pool.ntp.org";
     config.timezone = "<-04>4"; // UTC-4 timezone
 
-    // Initialize TimeManager
+    // Initialize TimeManager (timezone applied immediately)
     ret = tm.init(config);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize TimeManager: %d", ret);
         return;
     }
+
+    // Initialize and start Wi-Fi connection
+    wifi_init_sta();
+
+    // Wait until Wi-Fi is connected and we obtain an IP address before starting SNTP client
+    ESP_LOGI(TAG, "Waiting for Wi-Fi connection (IP address)...");
+    xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    ESP_LOGI(TAG, "Wi-Fi connected. Starting SNTP client...");
 
     // Start SNTP client
     ret = tm.start_sntp();

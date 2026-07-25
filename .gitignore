@@ -14,3 +14,7 @@ host_test/**/.cache/
 .cache/
 .clangd/
 *.code-workspace
+
+#secrets
+**/secrets.h
+**/secrets.hpp
