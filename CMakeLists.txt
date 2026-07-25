@@ -1,0 +1,9 @@
+idf_component_register(
+    SRCS 
+        "src/time_manager.cpp"
+    INCLUDE_DIRS 
+        "include"
+        "include/interfaces"
+    REQUIRES
+        "idf_hals"
+)
