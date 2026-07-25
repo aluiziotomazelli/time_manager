@@ -1,0 +1,9 @@
+idf_component_register(
+    SRCS 
+        "main.cpp"
+    REQUIRES 
+        time_manager
+        esp_wifi
+        esp_event
+        nvs_flash
+)
