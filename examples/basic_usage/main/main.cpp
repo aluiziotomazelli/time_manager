@@ -83,7 +83,7 @@ extern "C" void app_main(void)
 
     // Configure (Brazil region UTC-4 without DST)
     time_manager::TimeManagerConfig config;
-    config.use_dhcp_sntp = true;
+    config.use_dhcp_sntp = false;
     config.smooth_sync = false;
     config.sync_interval_ms = 3600000; // 1 hour
     config.default_server = "pool.ntp.org";
