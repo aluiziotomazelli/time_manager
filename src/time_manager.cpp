@@ -9,14 +9,15 @@
 #include <stdio.h>
 #include <string.h>
 
-static const char *TAG = "TimeManager";
+static const char* TAG = "TimeManager";
 
 namespace time_manager {
 
 TimeManager* TimeManager::s_instance = nullptr;
 
 TimeManager::TimeManager(idf_hals::IHalSntp& sntp_hal, idf_hals::IHalSystemTime& system_time_hal)
-    : sntp_hal_(sntp_hal), system_time_hal_(system_time_hal)
+    : sntp_hal_(sntp_hal)
+    , system_time_hal_(system_time_hal)
 {
 }
 
@@ -75,7 +76,8 @@ esp_err_t TimeManager::start_sntp()
             sntp_hal_.set_sync_interval(config_.sync_interval_ms);
         }
         ESP_LOGI(TAG, "SNTP started successfully");
-    } else {
+    }
+    else {
         ESP_LOGE(TAG, "Failed to start SNTP: %d", err);
     }
     return err;
@@ -164,7 +166,7 @@ static time_t tm_to_epoch(const struct tm& tm)
     int year = tm.tm_year + 1900;
     int month = tm.tm_mon + 1; // 1-12
     int day = tm.tm_mday;
-    
+
     if (month < 3) {
         month += 12;
         year -= 1;
@@ -181,13 +183,13 @@ TimeSyncPacket TimeManager::create_time_packet() const
     time_t now = get_timestamp_sec();
     struct tm local_tm = {};
     system_time_hal_.localtime_r(&now, &local_tm);
-    
+
     // Calculate difference between local time representation and UTC time
     time_t local_sec = tm_to_epoch(local_tm);
     long diff_sec = (long)(local_sec - now);
-    
+
     packet.tz_offset_min = (int16_t)(diff_sec / 60);
-    packet.sync_source = static_cast<uint8_t>(TimeSyncSource::SNTP);
+    packet.sync_source = TimeSyncSource::SNTP;
     packet.flags = is_synchronized() ? 0x01 : 0x00;
     return packet;
 }
@@ -216,25 +218,29 @@ esp_err_t TimeManager::sync_from_time_packet(const TimeSyncPacket& packet)
     int16_t offset_hours = -packet.tz_offset_min / 60;
     if (offset_hours >= 0) {
         snprintf(tz_str, sizeof(tz_str), "UTC%d", offset_hours);
-    } else {
+    }
+    else {
         snprintf(tz_str, sizeof(tz_str), "UTC%d", offset_hours);
     }
     set_timezone(tz_str);
 
     is_synchronized_ = true;
-    ESP_LOGI(TAG, "System time synchronized from node packet. Epoch: %llu ms, TZ offset: %d min",
-             packet.timestamp_ms, packet.tz_offset_min);
+    ESP_LOGI(
+        TAG,
+        "System time synchronized from node packet. Epoch: %llu ms, TZ offset: %d min",
+        packet.timestamp_ms,
+        packet.tz_offset_min);
     return ESP_OK;
 }
 
-void TimeManager::sntp_sync_callback(struct timeval *tv)
+void TimeManager::sntp_sync_callback(struct timeval* tv)
 {
     if (s_instance) {
         s_instance->handle_sync_event(tv);
     }
 }
 
-void TimeManager::handle_sync_event(struct timeval *tv)
+void TimeManager::handle_sync_event(struct timeval* tv)
 {
     is_synchronized_ = true;
     ESP_LOGI(TAG, "SNTP synchronized successfully. Current time: %ld sec", tv->tv_sec);
